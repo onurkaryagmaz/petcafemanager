@@ -1,0 +1,331 @@
+/* Using Telegram Theme Variables for adaptive UI */
+:root {
+    --tg-theme-bg-color: var(--tg-theme-bg-color, #ffffff);
+    --tg-theme-text-color: var(--tg-theme-text-color, #000000);
+    --tg-theme-button-color: var(--tg-theme-button-color, #3390ec);
+    --tg-theme-button-text-color: var(--tg-theme-button-text-color, #ffffff);
+    --tg-theme-hint-color: var(--tg-theme-hint-color, #999999);
+    
+    --cafe-bg: #f0e4d7;
+    --grid-line-color: #dcd0c0;
+    --action-bar-bg: #c8bca9;
+    --modal-bg: #fdfaf5;
+    --accent-color: #e57373;
+    --progress-bar-bg: #e0e0e0;
+    --progress-bar-fill: #76c7c0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
+    overflow: hidden;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    box-sizing: border-box;
+}
+
+/* --- Resource Bar --- */
+#resource-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    background-color: var(--action-bar-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.resource-display {
+    font-size: 1.2em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+.resource-display span {
+    margin-left: 8px;
+}
+
+/* --- Cafe Grid --- */
+#cafe-grid-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--cafe-bg);
+    overflow: hidden;
+    position: relative;
+}
+
+#cafe-grid {
+    display: grid;
+    grid-template-columns: repeat(10, min(8vw, 40px));
+    grid-template-rows: repeat(10, min(8vw, 40px));
+    gap: 1px;
+    background-color: var(--grid-line-color);
+    border: 2px solid var(--grid-line-color);
+    position: relative;
+}
+
+.grid-cell {
+    background-color: var(--cafe-bg);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: min(5vw, 24px); /* Responsive emoji size */
+}
+
+.grid-cell.occupied {
+    cursor: pointer;
+}
+.grid-cell.build-mode:hover {
+    background-color: rgba(118, 200, 192, 0.5);
+    cursor: crosshair;
+}
+
+/* Furniture, Customers, etc. */
+.game-object {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.customer-bubble {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    padding: 3px 5px;
+    border-radius: 50%;
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 5;
+}
+
+.patience-bar {
+    position: absolute;
+    bottom: -8px;
+    left: 10%;
+    width: 80%;
+    height: 5px;
+    background-color: var(--progress-bar-bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.patience-bar-inner {
+    height: 100%;
+    background-color: #f44336;
+    transition: width 0.5s linear;
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 5px;
+    left: 10%;
+    width: 80%;
+    height: 8px;
+    background-color: var(--progress-bar-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-inner {
+    height: 100%;
+    background-color: var(--progress-bar-fill);
+    width: 0%;
+}
+
+.ready-indicator {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-10px);}
+  60% {transform: translateY(-5px);}
+}
+
+/* --- Action Bar --- */
+#action-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    background-color: var(--action-bar-bg);
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+}
+
+.action-button {
+    padding: 12px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.action-button:active {
+    transform: translateY(1px);
+}
+
+/* --- Modals --- */
+#modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal {
+    background-color: var(--modal-bg);
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    color: var(--tg-theme-text-color);
+}
+
+.modal h2 {
+    margin-top: 0;
+    text-align: center;
+    color: var(--accent-color);
+}
+
+.modal-close-btn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 25px;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Modal Tabs */
+#build-tabs, #shop-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--grid-line-color);
+}
+
+.tab-link {
+    background-color: transparent;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--tg-theme-hint-color);
+    border-bottom: 3px solid transparent;
+}
+
+.tab-link.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.tab-content {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Item lists (Shop, Build, Cookbook) */
+.item-list, #recipe-list, #furniture-tab, #equipment-tab, #premium-currency-tab, #premium-items-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.shop-item, .recipe-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: var(--cafe-bg);
+    border-radius: 8px;
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-info h4 {
+    margin: 0 0 5px 0;
+}
+.item-info p {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--tg-theme-hint-color);
+}
+
+.buy-btn, .build-item-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.buy-btn.disabled, .build-item-btn.disabled {
+    background-color: var(--tg-theme-hint-color);
+    cursor: not-allowed;
+}
+/* Floating text for earnings */
+.floating-text {
+    position: absolute;
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 1.2em;
+    animation: floatUp 1.5s forwards;
+    pointer-events: none;
+    text-shadow: 1px 1px 2px black;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px);
+    }
+}
