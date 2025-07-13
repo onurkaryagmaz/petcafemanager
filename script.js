@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const recipesData = {
         fish_tea: { id: 'fish_tea', name: 'Fish Tea', sprite: '🍵', equipmentNeeded: 'blender', cookingTime: 10, price: 5 },
-        berry_pie: { id: 'berry_pie', name: 'Berry Pie', sprite: '🥧', equipmentNeeded: 'oven', cookingTime: 20, price: 15 },
+        berry_pie: { id: 'berry_pie', name: 'Berry Pie', sprite: '�', equipmentNeeded: 'oven', cookingTime: 20, price: 15 },
     };
 
     const furnitureData = {
@@ -69,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeOrders: {}, // 'x,y' of equipment: { orderId, startTime, totalTime }
         boosts: {
             rushHour: { active: false, endTime: 0 }
-        }
+        },
+        isNewPlayer: true // Flag for tutorial
     };
 
     // --- GAME LOGIC VARIABLES ---
@@ -86,6 +87,16 @@ document.addEventListener('DOMContentLoaded', () => {
             calculateAppeal();
             setInterval(gameLoop, 1000); // Main game loop runs every second
             console.log("Game Initialized and Loaded.");
+            
+            // Show tutorial on first load
+            if (gameState.isNewPlayer) {
+                showMessage(
+                    "Welcome to Pet Cafe Manager!",
+                    "Your goal is to build a cozy cafe for cute animal customers. Start by clicking the 'Build 🔨' button to place some furniture. Good luck!"
+                );
+                gameState.isNewPlayer = false; // Only show once
+                saveGame();
+            }
         });
     }
 
@@ -117,9 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     gameState = JSON.parse(JSON.stringify(defaultGameState)); // Deep copy
                 } else if (value) {
                     try {
-                        gameState = JSON.parse(value);
+                        const loadedState = JSON.parse(value);
                         // Data migration: if new properties added to default state, merge them in
-                        gameState = {...JSON.parse(JSON.stringify(defaultGameState)), ...gameState};
+                        gameState = {...JSON.parse(JSON.stringify(defaultGameState)), ...loadedState};
                     } catch (e) {
                         console.error("Failed to parse saved data, starting new game.", e);
                         gameState = JSON.parse(JSON.stringify(defaultGameState));
@@ -158,12 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = placedObject.type === 'furniture' ? furnitureData[placedObject.itemId] : equipmentData[placedObject.itemId];
                     cell.innerHTML = `<div class="game-object" title="${data.name}">${data.sprite}</div>`;
                     cell.classList.add('occupied');
-                    cell.onclick = () => onGridObjectClick(coord);
+                    cell.addEventListener('click', () => onGridObjectClick(coord));
                     
                     // Render customer if seated
                     const customer = gameState.activeCustomers[coord];
                     if (customer) {
-                        renderCustomer(cell, customer);
+                        renderCustomer(cell, coord, customer);
                     }
 
                     // Render cooking progress
@@ -173,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                 } else if (isBuildMode) {
-                     cell.onclick = () => onEmptyCellClick(coord);
+                     cell.addEventListener('click', () => onEmptyCellClick(coord));
                 }
                 
                 gridEl.appendChild(cell);
@@ -181,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function renderCustomer(cell, customer) {
+    function renderCustomer(cell, coord, customer) {
         const customerData = customersData[customer.customerId];
         const orderData = recipesData[customer.orderId];
         const customerEl = cell.querySelector('.game-object');
@@ -196,10 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const bubble = document.createElement('div');
         bubble.classList.add('customer-bubble');
         bubble.textContent = orderData.sprite;
-        bubble.onclick = (e) => {
-            e.stopPropagation();
+        bubble.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent grid click
             startOrder(customer.orderId, coord);
-        }
+        });
         customerEl.appendChild(bubble);
 
         // Patience bar
@@ -230,7 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (progress >= 100) {
             equipmentEl.classList.add('ready-indicator');
-            equipmentEl.innerHTML += orderData.sprite;
+            // Avoid duplicating the sprite if already there
+            if (!equipmentEl.textContent.includes(orderData.sprite)) {
+                equipmentEl.innerHTML += orderData.sprite;
+            }
         }
     }
     
@@ -476,11 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- SPECIFIC MODAL POPULATORS ---
     function openBuildModal() {
-        // Furniture Tab
         const furnitureTab = document.getElementById('furniture-tab');
         furnitureTab.innerHTML = '';
         Object.values(furnitureData).forEach(item => {
-            // Do not show premium items that need tokens here
             if (item.isPremium) return;
             const canAfford = gameState.resources.gold >= item.cost.gold;
             const itemEl = document.createElement('div');
@@ -490,14 +502,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4>${item.sprite} ${item.name}</h4>
                     <p>Appeal: ❤️+${item.appeal}</p>
                 </div>
-                <button class="build-item-btn ${canAfford ? '' : 'disabled'}" onclick="window.gameFuncs.startBuild('${item.id}', 'furniture')" ${canAfford ? '' : 'disabled'}>
+                <button class="build-item-btn ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'}>
                     🪙 ${item.cost.gold}
                 </button>
             `;
+            itemEl.querySelector('button').addEventListener('click', () => {
+                if (canAfford) enterBuildMode(item.id, 'furniture');
+            });
             furnitureTab.appendChild(itemEl);
         });
 
-        // Equipment Tab
         const equipmentTab = document.getElementById('equipment-tab');
         equipmentTab.innerHTML = '';
         Object.values(equipmentData).forEach(item => {
@@ -510,10 +524,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4>${item.sprite} ${item.name}</h4>
                     <p>Used for: ${item.type} recipes</p>
                 </div>
-                <button class="build-item-btn ${canAfford && !isOwned ? '' : 'disabled'}" onclick="window.gameFuncs.startBuild('${item.id}', 'equipment')" ${canAfford && !isOwned ? '' : 'disabled'}>
+                <button class="build-item-btn ${canAfford && !isOwned ? '' : 'disabled'}" ${canAfford && !isOwned ? '' : 'disabled'}>
                     ${isOwned ? 'Owned' : `🪙 ${item.cost.gold}`}
                 </button>
             `;
+            itemEl.querySelector('button').addEventListener('click', () => {
+                if (canAfford && !isOwned) enterBuildMode(item.id, 'equipment');
+            });
             equipmentTab.appendChild(itemEl);
         });
 
@@ -536,14 +553,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${isUnlocked ? 'Known' : 'Unlock'}
                 </button>
             `;
-            // Note: Recipe unlock logic not implemented in this prototype
+            itemEl.querySelector('button').addEventListener('click', () => {
+                if (!isUnlocked) showMessage("Coming Soon!", "Unlocking new recipes will be available in a future update.");
+            });
             recipeList.appendChild(itemEl);
         });
         openModal(cookbookModal);
     }
     
     function openShopModal() {
-        // Gourmet Tokens Tab
         const currencyTab = document.getElementById('premium-currency-tab');
         currencyTab.innerHTML = '';
         Object.values(iapData).forEach(item => {
@@ -553,14 +571,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="item-info">
                     <h4>🌟 ${item.name}</h4>
                 </div>
-                <button class="buy-btn" onclick="window.gameFuncs.buyIAP('${item.id}')">
+                <button class="buy-btn">
                     Buy (${item.cost} Stars)
                 </button>
             `;
+            itemEl.querySelector('button').addEventListener('click', () => buyIAP(item.id));
             currencyTab.appendChild(itemEl);
         });
 
-        // Premium Items Tab
         const premiumTab = document.getElementById('premium-items-tab');
         premiumTab.innerHTML = '';
         Object.values(furnitureData).forEach(item => {
@@ -573,17 +591,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4>${item.sprite} ${item.name}</h4>
                     <p>Huge Appeal Boost: ❤️+${item.appeal}</p>
                 </div>
-                <button class="build-item-btn ${canAfford ? '' : 'disabled'}" onclick="window.gameFuncs.startBuild('${item.id}', 'furniture')" ${canAfford ? '' : 'disabled'}>
+                <button class="build-item-btn ${canAfford ? '' : 'disabled'}" ${canAfford ? '' : 'disabled'}>
                     🌟 ${item.cost.tokens}
                 </button>
             `;
+            itemEl.querySelector('button').addEventListener('click', () => {
+                if (canAfford) enterBuildMode(item.id, 'furniture');
+            });
             premiumTab.appendChild(itemEl);
         });
+
+        // Rewarded Ads now use event listeners too
+        document.getElementById('rush-hour-ad').querySelector('button').addEventListener('click', startRushHourAd);
+        document.getElementById('clean-cafe-ad').querySelector('button').addEventListener('click', startCleanCafeAd);
         
         openModal(shopModal);
     }
 
-    function openTab(evt, tabName) {
+    // These functions are called by static HTML, so they need to be on the window object
+    window.openTab = (evt, tabName) => {
         let i, tabcontent, tablinks;
         const parent = evt.currentTarget.closest('.modal');
         tabcontent = parent.getElementsByClassName("tab-content");
@@ -597,12 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(tabName).style.display = "block";
         evt.currentTarget.className += " active";
     }
+    window.closeAllModals = closeAllModals;
+
 
     // --- MONETIZATION ---
     function buyIAP(itemId) {
         const item = iapData[itemId];
-        // In a real app, this opens the Telegram Stars invoice.
-        // For this prototype, we simulate a successful purchase.
         console.log(`Simulating purchase of ${item.name} for ${item.cost} Stars.`);
         // tg.openInvoice(...)
         
@@ -632,30 +658,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function startCleanCafeAd() {
          console.log("Simulating rewarded ad for Clean Cafe.");
          // In a real app: tg.showAd().then(...)
-         // This is a simple instant boost
          gameState.cafeAppeal += 10;
          updateResourceBar();
          tg.HapticFeedback.notificationOccurred('success');
          showMessage("Cafe Sparkles!", "You got a temporary +10 Appeal boost!");
-         // The boost could be temporary by setting a timer to remove it
          setTimeout(() => {
-            gameState.cafeAppeal -= 10;
-            updateResourceBar();
+            calculateAppeal(); // Recalculate to remove the temporary boost
             console.log("Temporary appeal boost wore off.");
          }, 5 * 60 * 1000); // 5 minute boost
     }
     
-    // Expose functions to be called from inline HTML onclick
-    window.gameFuncs = {
-        startBuild: enterBuildMode,
-        buyIAP,
-    };
-
-    window.openTab = openTab;
-    window.closeAllModals = closeAllModals;
-    window.startRushHourAd = startRushHourAd;
-    window.startCleanCafeAd = startCleanCafeAd;
-    
     // --- START THE GAME ---
     initGame();
 });
+�
