@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pet Cafe Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <!-- Main Game Container -->
+    <div id="game-container">
+        <!-- Top Resource Bar -->
+        <div id="resource-bar">
+            <div id="gold-coins" class="resource-display">🪙 <span id="gold-value">0</span></div>
+            <div id="gourmet-tokens" class="resource-display">🌟 <span id="token-value">0</span></div>
+            <div id="cafe-appeal" class="resource-display">❤️ <span id="appeal-value">0</span></div>
+        </div>
+
+        <!-- Cafe Grid -->
+        <div id="cafe-grid-container">
+            <div id="cafe-grid"></div>
+             <!-- Floating Text Container -->
+            <div id="floating-text-container"></div>
+        </div>
+
+
+        <!-- Bottom Action Bar -->
+        <div id="action-bar">
+            <button id="build-btn" class="action-button">Build 🔨</button>
+            <button id="cookbook-btn" class="action-button">Cookbook 📖</button>
+            <button id="shop-btn" class="action-button">Shop 🛒</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-backdrop" class="hidden">
+        <!-- Build Modal -->
+        <div id="build-modal" class="modal hidden">
+            <h2>Build Menu</h2>
+            <div id="build-tabs">
+                <button class="tab-link active" onclick="openTab(event, 'furniture-tab')">Furniture</button>
+                <button class="tab-link" onclick="openTab(event, 'equipment-tab')">Equipment</button>
+            </div>
+            <div id="furniture-tab" class="tab-content">
+                <!-- Furniture items will be injected by JS -->
+            </div>
+            <div id="equipment-tab" class="tab-content" style="display: none;">
+                <!-- Equipment items will be injected by JS -->
+            </div>
+            <button class="modal-close-btn" onclick="closeAllModals()">Close</button>
+        </div>
+
+        <!-- Cookbook Modal -->
+        <div id="cookbook-modal" class="modal hidden">
+            <h2>Cookbook</h2>
+            <div id="recipe-list">
+                <!-- Recipes will be injected by JS -->
+            </div>
+            <button class="modal-close-btn" onclick="closeAllModals()">Close</button>
+        </div>
+
+        <!-- Shop Modal -->
+        <div id="shop-modal" class="modal hidden">
+            <h2>Shop</h2>
+            <div id="shop-tabs">
+                 <button class="tab-link active" onclick="openTab(event, 'premium-currency-tab')">Gourmet Tokens</button>
+                 <button class="tab-link" onclick="openTab(event, 'premium-items-tab')">Premium Sets</button>
+                 <button class="tab-link" onclick="openTab(event, 'rewarded-ads-tab')">Boosts</button>
+            </div>
+
+            <div id="premium-currency-tab" class="tab-content">
+                <h3>Buy Gourmet Tokens (🌟)</h3>
+                <!-- IAP items will be injected by JS -->
+            </div>
+            <div id="premium-items-tab" class="tab-content" style="display: none;">
+                 <h3>Premium Furniture</h3>
+                <!-- Premium items will be injected by JS -->
+            </div>
+            <div id="rewarded-ads-tab" class="tab-content" style="display: none;">
+                 <h3>Watch Ads for Boosts!</h3>
+                 <div class="shop-item" id="rush-hour-ad">
+                    <div class="item-info">
+                        <h4>Rush Hour!</h4>
+                        <p>Double all earnings for 5 minutes!</p>
+                    </div>
+                    <button class="buy-btn" onclick="startRushHourAd()">Watch Ad</button>
+                </div>
+                 <div class="shop-item" id="clean-cafe-ad">
+                    <div class="item-info">
+                        <h4>Instant Clean!</h4>
+                        <p>Get a temporary appeal boost!</p>
+                    </div>
+                    <button class="buy-btn" onclick="startCleanCafeAd()">Watch Ad</button>
+                </div>
+            </div>
+
+            <button class="modal-close-btn" onclick="closeAllModals()">Close</button>
+        </div>
+        
+        <!-- Generic Message Modal -->
+        <div id="message-modal" class="modal hidden">
+            <h2 id="message-title"></h2>
+            <p id="message-text"></p>
+            <button class="modal-close-btn" onclick="closeAllModals()">OK</button>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
